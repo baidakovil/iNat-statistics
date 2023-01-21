@@ -29,6 +29,9 @@ else:
     print('Finish day:')
     finish_day = input()
 
+print('How much first positions to show in table? \n Print \'all\' to see all:')
+show_positions = input()
+
 if begin_year == 'min':
     start_date = 'min'
 else:
@@ -134,9 +137,12 @@ def prepare_changes(df, start_date, finish_date):
     return stat_changes
 
 
-def changes_beauty(changes):
-
-    changes = changes[((changes['pos_cool'] == 11).cumsum() != 1)].copy()
+def changes_beauty(changes, show_positions):
+    if show_positions == 'all':
+        show_positions = changes.shape[0] - 1
+    else:
+        show_positions = int(show_positions)
+    changes = changes[((changes['pos_cool'] == (show_positions + 1)).cumsum() != 1)].copy()
     changes['pos_cool'] = changes['pos_cool'].astype(str) + changes['pos_cool_shift']
     changes['obs_count'] = changes['obs_count'].astype(str) + changes['obs_count_shift']
     changes['obs_res_count'] = changes['obs_res_count'].astype(str) + changes['obs_res_count_shift']
@@ -164,8 +170,9 @@ def changes_html(changes, htmlname):
 
 obs, start_date, finish_date = prepare_df(observations_path, start_date, finish_date)
 changes = prepare_changes(obs, start_date, finish_date)
-changes = changes_beauty(changes)
+changes = changes_beauty(changes, show_positions)
 changes_html(changes, htmlname)
 print('Start date:', start_date)
 print('Finish date:', finish_date)
 print('Exported to', htmlname)
+print('Kaif')
