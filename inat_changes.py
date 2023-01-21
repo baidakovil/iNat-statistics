@@ -32,6 +32,9 @@ else:
 print('How much first positions to show in table? \n Print \'all\' to see all:')
 show_positions = input()
 
+print('Print table to terminal? Print \'y\' if yes, any letter if not')
+printtocmd = input()
+
 if begin_year == 'min':
     start_date = 'min'
 else:
@@ -152,27 +155,30 @@ def changes_beauty(changes, show_positions):
     return changes
 
 
-def changes_html(changes, htmlname):
+def changes_html(changes, htmlname, printtocmd):
   
-  changes.to_html(htmlname, header=True, index=False, escape=False, justify='center', border=None)
+    changes.to_html(htmlname, header=True, index=False, escape=False, justify='center', border=None)
 
-  with open(htmlname, 'r') as file :
-    filedata = file.read()
+    with open(htmlname, 'r') as file :
+        filedata = file.read()
 
-  filedata = filedata.replace(' class="dataframe"', '') # Replace the target string
-  filedata = filedata.replace('<th>', '<th  style="vertical-align:top">')
-  filedata = filedata.replace('+new', '<b style="font-size:62%;color:green">&nbsp;&nbsp;NEW</b>')
-  filedata = re.sub('\+([0-9]+)',r'<b style="font-size:62%;color:green">&nbsp;&nbsp;&#8593;\1</b>',filedata)
+    filedata = filedata.replace(' class="dataframe"', '') # Replace the target string
+    filedata = filedata.replace('<th>', '<th  style="vertical-align:top">')
+    filedata = filedata.replace('+new', '<b style="font-size:62%;color:green">&nbsp;&nbsp;NEW</b>')
+    filedata = re.sub('\+([0-9]+)',r'<b style="font-size:62%;color:green">&nbsp;&nbsp;&#8593;\1</b>',filedata)
 
-  with open(htmlname, 'w') as file: # Write the file out again
-    file.write(filedata)
+    if printtocmd == ('y' or 'Y'):
+        print(filedata)
 
+    with open(htmlname, 'w') as file: # Write the file out again
+        file.write(filedata)
 
 obs, start_date, finish_date = prepare_df(observations_path, start_date, finish_date)
 changes = prepare_changes(obs, start_date, finish_date)
 changes = changes_beauty(changes, show_positions)
-changes_html(changes, htmlname)
+changes_html(changes, htmlname, printtocmd)
 print('Start date:', start_date)
 print('Finish date:', finish_date)
 print('Exported to', htmlname)
+
 print('Kaif')
