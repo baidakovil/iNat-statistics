@@ -100,7 +100,7 @@ def shiftpos(shiftrow):
     if shiftrow['position_y'] == 0:
         cell = '+new'
     elif shiftrow['pos_cool_shift'] > 0:
-        cell = '+' + str(shiftrow['pos_cool'])
+        cell = '+' + str(shiftrow['pos_cool_shift'])
     else: cell = ''
 
     return cell
