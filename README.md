@@ -1,5 +1,7 @@
 # iNat utilities
 
+This repo is common place for set of programs for iNaturalist.org users.
+
 ## geojpg
 Utility to insert gpx geodata to jpg files. Have [separate](https://github.com/baidakovil/geojpg) repo
 
@@ -19,3 +21,6 @@ How it's look see [here](https://www.inaturalist.org/projects/tsyurupy-i-ego-les
 *inat_raritets.ipynb*
 Utility to look at most geographically popular- or rare species in your iNat project
 How it's look see [here]([https://www.inaturalist.org/projects/tsyurupy-i-ego-lesa/journal/84447-osen-zima-2022-23-uchastniki-proekta](https://www.inaturalist.org/projects/tsyurupy-i-ego-lesa/journal/75872-osen-zima-2022-23-samye-populyarnye-vidy))
+
+## inat-game
+*inat-inat.ipynb* Game for two users: who better knows biological species? Used observations of users with given iNat-username =)
