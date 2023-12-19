@@ -1,4 +1,7 @@
-helping_datasets.txt
-data/*temp_file*
-data/*backup*
-iNat
+# Experiment data folder
+/data
+/output
+
+#  Helping files
+checkscript.py
+
