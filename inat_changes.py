@@ -229,7 +229,7 @@ def format_last_obs(last_obs):
 
 def changes_html(changes):
     changes.to_html(
-        'output/changes.html',
+        'changes.html',
         header=True,
         index=False,
         escape=False,
@@ -237,7 +237,7 @@ def changes_html(changes):
         border=None,
     )
 
-    with open('output/changes.html', 'r') as file:
+    with open('changes.html', 'r') as file:
         filedata = file.read()
 
     filedata = filedata.replace(' class="dataframe"', '')  # Replace the target string
@@ -249,7 +249,7 @@ def changes_html(changes):
         '\+([0-9]+)', r'<b style="font-size:62%;color:green">&#8593;\1</b>', filedata
     )
 
-    with open('./changes.html', 'w') as file:  # Write the file out again
+    with open('changes.html', 'w') as file:  # Write the file out again
         file.write(filedata)
 
 
