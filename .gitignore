@@ -5,3 +5,5 @@
 #  Helping files
 checkscript.py
 
+# Binary
+*/**__pycache__
