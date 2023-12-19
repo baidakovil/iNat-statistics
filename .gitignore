@@ -1,6 +1,6 @@
 # Experiment data folder
-/data
-/output
+data
+output
 
 #  Helping files
 checkscript.py
