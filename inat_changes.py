@@ -253,19 +253,24 @@ def changes_html(changes):
         file.write(filedata)
 
 
-def main(filename_csv):
+def main(filename_csv, start_date, finish_date, show_positions, project_id):
     print('entered to main() in inat_changes.py')
-    PATH_CSV_BASE = '.'
-    start_date = date(2023, 2, 28)
-    # start_date = 'min'
-    finish_date = date(2023, 8, 31)
-    # finish_date = 'max'
-    # show_positions = 20
-    show_positions = 'all'
-    project_id = 'tsyurupy-i-ego-lesa'
-    obs, start_date, finish_date = prepare_df(
-        os.path.join(PATH_CSV_BASE, filename_csv), start_date, finish_date
-    )
+
+    if start_date != 'min':
+        start_year, start_month, start_day = start_date.split('-')
+        start_date = date(int(start_year), int(start_month), int(start_day))
+
+    if finish_date != 'max':
+        finish_year, finish_month, finish_day = finish_date.split('-')
+        finish_date = date(int(finish_year), int(finish_month), int(finish_day))
+
+    if 'all' not in show_positions:
+        show_positions = int(show_positions)
+
+    # tsyurupy-i-ego-lesa
+
+    obs, start_date, finish_date = prepare_df(filename_csv, start_date, finish_date)
+
     print(start_date, finish_date)
     changes = prepare_changes(obs, start_date, finish_date)
     changes_linked = changes.apply(

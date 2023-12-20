@@ -1,10 +1,76 @@
 <!DOCTYPE html>
 <html>
+    <title>iNat-changes</title>
+    <h1>Create a table of user changes</h1>
 <body>
-    <form>
-        Please choose your file: <input type="file">
+    <form method="POST" enctype="multipart/form-data" onsubmit="return validateForm()">
+
+        <label for="file">Please choose your CSV file:</label><br>
+        <input type="file" id="file" name="file" required></br><br>
+
+        <label for="start_date">Choose base (first) date to show changes:</label><br>
+        <input type="date" id="start_date" name="start_date">
+        <input type="checkbox" id="use_min_date" name="use_min_date" onclick="disableStartDate()">Use the earliest date<br><br>
+
+        <label for="finish_date">Choose current (second) date to show changes:</label><br>
+        <input type="date" id="finish_date" name="finish_date">
+        <input type="checkbox" id="use_max_date" name="use_max_date" onclick="disableFinishDate()">Use the most recent date<br><br>
+        
+        <label for="show_positions">How many top-positions to show:</label><br>
+        <input type="number" id="show_positions" name="show_positions">
+        <input type="checkbox" id="use_show_all" name="use_show_all" onclick="disableShowPositions()">Show all users<br><br>
+
+        <label for="project_id"></label>Project ID:</label><br>
+        <input type="text" id="project_id" name="project_id" placeholder="Project id" required></br><br>
+        
+        <input type="submit" value="Submit">
+
     </form>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src='{{ url_for('static', filename='index.js') }}'></script>
+
+    <script>
+        function validateForm() {
+            var file = document.getElementById("file").value;
+
+            var start_date = document.getElementById("start_date").value;
+            var useMinDate = document.getElementById("use_min_date").checked;
+
+            var finish_date = document.getElementById("finish_date").value;
+            var useMaxDate = document.getElementById("use_max_date").checked;
+
+            var show_positions = document.getElementById("show_positions").value;
+            var useShowAll = document.getElementById("use_show_all").checked;
+
+            var project_id = document.getElementById("project_id").value;
+            if (file == "" || (start_date == "" && !useMinDate) || (finish_date == "" && !useMaxDate) || (show_positions == "" && !useShowAll) || project_id == "") {
+                alert("All fields must be filled out");
+                return false;
+            }
+        }
+
+        function disableStartDate() {
+        var useMinDate = document.getElementById("use_min_date").checked;
+        document.getElementById("start_date").disabled = useMinDate;
+        if (useMinDate) {
+            document.getElementById("start_date").value = "";
+            }
+        }
+
+        function disableFinishDate() {
+        var useMaxDate = document.getElementById("use_max_date").checked;
+        document.getElementById("finish_date").disabled = useMaxDate;
+        if (useMaxDate) {
+            document.getElementById("finish_date").value = "";
+            }
+        }
+
+        function disableShowPositions() {
+        var useShowAll = document.getElementById("use_show_all").checked;
+        document.getElementById("show_positions").disabled = useShowAll;
+        if (useShowAll) {
+            document.getElementById("show_positions").value = "";
+            }
+        }
+    </script>
+
 </body>
 </html>
