@@ -273,12 +273,15 @@ def main(filename_csv, start_date, finish_date, show_positions, project_id):
 
     print(start_date, finish_date)
     changes = prepare_changes(obs, start_date, finish_date)
-    changes_linked = changes.apply(
-        changes_linking,
-        axis=1,
-        start_date=start_date,
-        finish_date=finish_date,
-        project_id=project_id,
-    )
+    if project_id:
+        changes_linked = changes.apply(
+            changes_linking,
+            axis=1,
+            start_date=start_date,
+            finish_date=finish_date,
+            project_id=project_id,
+        )
+    else:
+        changes_linked = changes
     changes = changes_beauty(changes_linked, show_positions)
     changes_html(changes)

@@ -1,31 +1,87 @@
 <!DOCTYPE html>
 <html>
+<head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <title>iNat-changes</title>
-    <h1>Create a table of user changes</h1>
-<body>
-    <form method="POST" enctype="multipart/form-data" onsubmit="return validateForm()">
+    <script>
+        function showPopup() {
+            document.getElementById('popup').style.display = 'flex';
+        }
 
-        <label for="file">Please choose your CSV file:</label><br>
-        <input type="file" id="file" name="file" required></br><br>
+        function hidePopup() {
+            document.getElementById('popup').style.display = 'none';
+        }
 
-        <label for="start_date">Choose base (first) date to show changes:</label><br>
+        document.addEventListener('keydown', hidePopup);
+    </script>
+</head>
+
+    <body onclick="hidePopup()">
+
+        <div class="container">
+            <form method="POST" enctype="multipart/form-data" onsubmit="return validateForm()">
+                <h1 style="text-align: center;">Create a table of iNaturalist project user changes</h1>
+                
+                <button id="infoBtn" type="button" onclick="event.stopPropagation(); showPopup()">HELP</button>
+        <ol>
+            <li><label for="file">Please choose your CSV file:</label></li>
+        <input type="file" accept=".csv" id="file" name="file" required></br><br>
+
+        <li><label for="start_date">Choose base (first) date to show changes:</label></li>
         <input type="date" id="start_date" name="start_date">
         <input type="checkbox" id="use_min_date" name="use_min_date" onclick="disableStartDate()">Use the earliest date<br><br>
 
-        <label for="finish_date">Choose current (second) date to show changes:</label><br>
+        <li><label for="finish_date">Choose current (second) date to show changes:</label></li>
         <input type="date" id="finish_date" name="finish_date">
         <input type="checkbox" id="use_max_date" name="use_max_date" onclick="disableFinishDate()">Use the most recent date<br><br>
         
-        <label for="show_positions">How many top-positions to show:</label><br>
+        <li><label for="show_positions">How many top-positions to show:</label></li>
         <input type="number" id="show_positions" name="show_positions">
         <input type="checkbox" id="use_show_all" name="use_show_all" onclick="disableShowPositions()">Show all users<br><br>
 
-        <label for="project_id"></label>Project ID:</label><br>
-        <input type="text" id="project_id" name="project_id" placeholder="Project id" required></br><br>
-        
-        <input type="submit" value="Submit">
+        <li><label for="project_id"></label>Project ID, for links creating:</label></li>
+        <input type="text" id="project_id" name="project_id" placeholder="Can be omitted"></br><br>
+        </ol>
+                <input type="submit" value="Submit">
+            </form>
 
-    </form>
+        <footer>
+                <p>Author here: <a href="https://github.com/baidakovil">github.com/baidakovil</a></p>
+        </footer> 
+
+        </div>
+
+    <div id="popup" onclick="hidePopup()">
+        <div id="popupContent">
+            <p><b>What is this?</b>
+            This is small app for iNaturalist users. It can show user activity over period of time for some batch of observations in HTML. It means, you can past it to iNat journal as a table.
+            For example, if you have a project, you can see and publish who was most active users for last week or for last 10 years.
+            Or look who was most active Owls observer in last time.</p>
+
+            <p><b>What is the result?</b>
+            Look <a href="https://www.inaturalist.org/projects/tsyurupy-i-ego-lesa/journal/75862-2023" target="_blank">here</a> (opens link in new tab), for example. This is changes in specific project from 2023-03-01 till 2023-09-01.
+
+            <p><b>How to use it?</b>
+            First, load interested observations into csv file. It is easy: press «Download» in filter dialog, go to Export page and load file to your computer.
+            In Export dialog you can leave all checkboxes by default. But, to be specific, you need this fields: 'id', 'user_login', 'created_at', 'quality_grade', 'scientific_name', 'common_name'.
+            
+            Buttons are here:</br></br>
+            <img src="{{ url_for('static', filename='export.png') }}"></br></br>
+            You also can find Export button on every project main page.</p>
+
+            <p><b>What does Base (first) date and Current (second) dates mean?</b>
+            Changes is something between two points. If you want to know changes in observations quantity, you need two dates. These are two dates. If you have check "Use the most earliest date" or "Use the most recent date", program will look for first and last dates in provided csv.</p>
+
+            <p><b>What is Project ID mean?</b>
+            If your csv loaded for single project observations without additional filters, you can make table values to be clickable. For this app should know what project is. Project ID is what you see in address line: inaturalist.org/projects/PROJECT_ID</p>
+
+            <p><b>Does csv stores somewhere? What about privacy?</b>
+            At this stage, no privacy guaranties provided. Please use this app for your own risk.</p>
+
+            <p><b>Who is it on the Help button?</b>
+            It is <a href="https://en.wikipedia.org/wiki/Red_panda" target="_blank">red panda</a> on the Help button.</p>
+        </div>
+    </div>
 
     <script>
         function validateForm() {
@@ -41,8 +97,8 @@
             var useShowAll = document.getElementById("use_show_all").checked;
 
             var project_id = document.getElementById("project_id").value;
-            if (file == "" || (start_date == "" && !useMinDate) || (finish_date == "" && !useMaxDate) || (show_positions == "" && !useShowAll) || project_id == "") {
-                alert("All fields must be filled out");
+            if (file == "" || (start_date == "" && !useMinDate) || (finish_date == "" && !useMaxDate) || (show_positions == "" && !useShowAll)) {
+                alert("All fields except Project ID must be filled out");
                 return false;
             }
         }
