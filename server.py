@@ -1,5 +1,6 @@
-from flask import Flask, request, send_file, render_template
+from flask import Flask, render_template, request, send_file
 from werkzeug.utils import secure_filename
+
 from inat_changes import main
 
 app = Flask(__name__)
@@ -41,4 +42,4 @@ def home():
 
 if __name__ == '__main__':
     print('Server started')
-    app.run(port=5000)
+    app.run(host='0.0.0.0')
