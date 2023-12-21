@@ -86,14 +86,14 @@ def prepare_to_date(df: DataFrame, date_to: date) -> DataFrame:
         columns={
             'user': 'user',
             'obs_count': 'obs_count',
-            'user_login': 'obs_res_count',
+            'count': 'obs_res_count',
         },
         inplace=True,
     )
     #  Заполняем нулями значения NaN (для тех у кого нет ни одного research).
     stat.fillna(0, inplace=True)
     #  Меняем "х.0" на "x".
-    stat['obs_res_count'] = stat['obs_count'].astype('Int64')
+    stat['obs_res_count'] = stat['obs_res_count'].astype('Int64')
     stat.sort_values(
         by=['obs_count', 'obs_res_count', 'user'], ascending=False, inplace=True
     )
