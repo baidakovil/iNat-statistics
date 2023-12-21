@@ -1,16 +1,11 @@
 from flask import Flask, render_template, request, send_file
+from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.utils import secure_filename
 
 from inat_changes import main
 
 app = Flask(__name__)
-app.config.update(APPLICATION_ROOT='/ich')
 
-
-from flask import request, redirect, url_for
-@route('/ich')
-def route():
-    return redirect(url_for('home', next=request.full_path)
 
 @app.route('/', methods=['POST'])
 def upload_file():
