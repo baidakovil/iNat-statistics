@@ -7,3 +7,10 @@ checkscript.py
 
 # Binary
 **/*__pycache__
+
+# VSCode files
+.vscode
+
+# Created files
+changes.html
+logger.log
