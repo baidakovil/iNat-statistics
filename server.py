@@ -7,6 +7,11 @@ app = Flask(__name__)
 app.config.update(APPLICATION_ROOT='/ich')
 
 
+from flask import request, redirect, url_for
+@route('/ich')
+def route():
+    return redirect(url_for('home', next=request.full_path)
+
 @app.route('/', methods=['POST'])
 def upload_file():
     if request.method == 'POST':
