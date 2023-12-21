@@ -4,6 +4,7 @@ from werkzeug.utils import secure_filename
 from inat_changes import main
 
 app = Flask(__name__)
+app.config.update(APPLICATION_ROOT='/ich')
 
 
 @app.route('/', methods=['POST'])
