@@ -3,7 +3,7 @@
 
 This repository is common place for set of programs for iNaturalist.org users.
 
-## iNat-changes
+# iNat-changes
 [![Dynamic JSON Badge](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Finat-changes-deploy-status.onrender.com%2Fsrv-cm0tvola73kc73ebeqdg&query=status&style=flat-square&logo=render&label=Render%3A%20iNat-changes&color=green&link=https%3A%2F%2Finat-changes.onrender.com)](https://inat-changes.onrender.com) [![Pylint](https://github.com/baidakovil/iNat-stats/actions/workflows/pylint.yml/badge.svg)](https://github.com/baidakovil/iNat-stats/actions/workflows/pylint.yml) [![mypy](https://github.com/baidakovil/iNat-stats/actions/workflows/mypy.yml/badge.svg)](https://github.com/baidakovil/iNat-stats/actions/workflows/mypy.yml)
 
 This utility catch **user activity changes** in your iNat project or in **list of any iNat observations**. It creates html table, ready to publish to iNat journal post.  
@@ -27,7 +27,7 @@ Flask online-app with core script `inat_changes.py`.
 * **Observations count increase**: both total or research. Look at 3rd, 4th column in first line:
 <img src="docs/changes_sample.png" width=100%></img>
 
-* **Position increase**: above you can see, for current period user *budetinetakoe* became first after being second. Position decrease is not shown
+* **Position increase**: above you can see, for current period user *budetinetakoe* became first after being twentieth. Position decrease is not shown
 
 * «**New user**» marks: user *anastasiiamerkulova* above first appeared in current period
 
@@ -46,7 +46,7 @@ Flask online-app with core script `inat_changes.py`.
 
 * No statistics about observations: current period / total users / total observations
 
-## iNat-raritets
+# iNat-raritets
 
 [![Pylint](https://github.com/baidakovil/iNat-stats/actions/workflows/pylint.yml/badge.svg)](https://github.com/baidakovil/iNat-stats/actions/workflows/pylint.yml) [![mypy](https://github.com/baidakovil/iNat-stats/actions/workflows/mypy.yml/badge.svg)](https://github.com/baidakovil/iNat-stats/actions/workflows/mypy.yml)
 
