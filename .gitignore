@@ -4,6 +4,7 @@ output
 
 #  Helping files
 checkscript.py
+**/*.ipynb
 
 # Binary
 **/*__pycache__
