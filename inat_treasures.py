@@ -98,7 +98,7 @@ def prepare_df(
     """
     df_full = pd.read_csv(csv_path)
     #  Column reorder.
-    df = df_full.loc[:, 'taxon_id':'taxon_form_name'].copy()
+    df = df_full.loc[:, 'taxon_id':'taxon_form_name'].copy()  # type: ignore
     df.insert(0, 'iconic_taxon_name', df_full['iconic_taxon_name'])
     df.insert(0, 'created_at', '')
     df.insert(0, 'quality_grade', df_full['quality_grade'])
@@ -246,17 +246,18 @@ def fetch_radius(havenoradiuses: DataFrame) -> DataFrame:
         temp_file.write('taxon_id,radius,date,count\n')
     df = DataFrame(columns=['taxon_id', 'radius', 'date', 'count'])
     for i in tqdm(range(havenoradiuses.shape[0])):
+        assert isinstance(i, int)
         taxon_id = havenoradiuses.iloc[i, 0]
         radius = havenoradiuses.iloc[i, 1]
         date_to = havenoradiuses.iloc[i, 2]
         if radius == 0:
             geoparams = ['', '', '']
         else:
-            geoparams = [LAT, LNG, radius]
+            geoparams = [LAT, LNG, str(radius)]
         params = {
             'verifiable': 'true',
-            'taxon_id': taxon_id,
-            'd2': date_to,
+            'taxon_id': str(taxon_id),
+            'd2': str(date_to),
             'lat': geoparams[0],
             'lng': geoparams[1],
             'radius': geoparams[2],
@@ -271,10 +272,10 @@ def fetch_radius(havenoradiuses: DataFrame) -> DataFrame:
             url='https://api.inaturalist.org/v1/observations', params=params, timeout=20
         )
         count = response.json()['total_results']
-        df.loc[i] = [taxon_id, radius, date_to, count]
+        df.loc[i] = [taxon_id, radius, date_to, count]  # type: ignore
         #  Write to reserve file.
         with open(temporal_txt_path, 'a', encoding='utf-8') as temp_file:
-            db_line = [str(taxon_id), str(radius), date_to, str(count)]
+            db_line = [str(taxon_id), str(radius), str(date_to), str(count)]
             temp_file.write(','.join(db_line) + '\n')
         if response.status_code != 200:
             logger.warning('Response is not 200: %s. Smth wrong', response.status_code)
@@ -369,8 +370,10 @@ def get_radius_info(
         .copy()
     )
     #  Calculate difference for two dates
-    df_diff = df_compact.loc[:, finish_date_str] - df_compact.loc[:, start_date_str]
-    df_diff = pd.concat([df_diff], keys=['count_diff'], axis=1)
+    df_diff_series = (
+        df_compact.loc[:, finish_date_str] - df_compact.loc[:, start_date_str]
+    )
+    df_diff = pd.concat([df_diff_series], keys=['count_diff'], axis=1)
     #  Mark with positions
     df_pos_start = df_compact[
         df_compact[(start_date_str, RADIUSES_LIST[-1])].notnull()
@@ -393,7 +396,7 @@ def get_radius_info(
         df[['taxon_id', 'quality_grade']].groupby(by='taxon_id', axis=0).sum()
     )
     #  Reformat df
-    taxons_df_finish.columns = (
+    taxons_df_finish.columns = (  # type: ignore
         ('taxon_rang', ''),
         ('taxon_name', ''),
         ('common_name', ''),
@@ -597,7 +600,7 @@ def sort_separate(df: DataFrame, raritets_sort: bool) -> List[DataFrame]:
 
     radiuse_array = np.asarray(RADIUSES_LIST)
     dataframes = []
-    count_col_name = []
+    count_col_name: str = ''
     radius_pars = f'&lat={LAT}&lng={LNG}&radius=xxx'
 
     for radius in RADIUSES_LIST:
