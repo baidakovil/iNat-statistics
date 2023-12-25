@@ -1,16 +1,16 @@
-import json
+"""This file contain all functions to calc html-OBSERVATIONS-statistic from csv file."""
 import logging
-import os
 import re
 import sys
 import time
 from datetime import date
-from typing import Iterable, List, Sequence, Tuple, Union
+from typing import List, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
 import requests
 from pandas import DataFrame, Series
+from requests import HTTPError
 from tqdm import tqdm
 
 from services.logger import logger
@@ -18,12 +18,71 @@ from services.logger import logger
 logger = logging.getLogger('A.ina')
 logger.setLevel(logging.DEBUG)
 
-
-# настройка, чтобы видеть все колонки
-pd.set_option('display.max_columns', None)
-pd.set_option('display.colheader_justify', 'right')
-
-import i18n
+# START_DATE = 'min'
+# FINISH_DATE = 'max'
+START_DATE = date(2023, 2, 28)
+FINISH_DATE = date(2023, 8, 31)
+PROJECT_ID = 'tsyurupy-i-ego-lesa'
+LAT = '55.494403'
+LNG = '38.644662'
+PATH_CSV = 'data/observations-390079_tahf_22dec2023.csv'
+PATH_DATABASE = 'data/radiuses_dataset.csv'
+RADIUSES_LIST = (20, 200, 2000, 0)
+SHOW_POS_RARITETS = 20
+SHOW_POS_AFRITETS = 15
+SEC_SLEEP_TIME = 1
+MONTH_NUM = int(FINISH_DATE.strftime('%m'))
+MONTHS_RU = {
+    1: 'Янв',
+    2: 'Фев',
+    3: 'Мар',
+    4: 'Апр',
+    5: 'Май',
+    6: 'Июн',
+    7: 'Июл',
+    8: 'Авг',
+    9: 'Сен',
+    10: 'Окт',
+    11: 'Ноя',
+    12: 'Дек',
+}
+FORMAT_FINISH_DATE = FINISH_DATE.strftime(f'%d {MONTHS_RU.get(MONTH_NUM)} %Y')
+RANKS_ENRU = {
+    'taxon_kingdom_name': 'Царство',
+    'taxon_phylum_name': 'Тип',
+    'taxon_subphylum_name': 'Подтип',
+    'taxon_superclass_name': 'Надкласс',
+    'taxon_class_name': 'Класс',
+    'taxon_subclass_name': 'Подкласс',
+    'taxon_infraclass_name': 'Инфракласс',
+    'taxon_subterclass_name': 'Надкласс',
+    'taxon_superorder_name': 'Надотряд',
+    'taxon_order_name': 'Отряд',
+    'taxon_suborder_name': 'Подотряд',
+    'taxon_infraorder_name': 'Инфраотряд',
+    'taxon_parvorder_name': 'Парвотряд',
+    'taxon_zoosection_name': 'Зоосекция',
+    'taxon_zoosubsection_name': 'Зооподсекция',
+    'taxon_superfamily_name': 'Надсемейство',
+    'taxon_epifamily_name': 'Эписемейство',
+    'taxon_family_name': 'Семейство',
+    'taxon_subfamily_name': 'Подсемейство',
+    'taxon_supertribe_name': 'Надтриба',
+    'taxon_tribe_name': 'Триба',
+    'taxon_subtribe_name': 'Подтриба',
+    'taxon_genus_name': 'Род',
+    'taxon_genushybrid_name': 'Genus hybrid',
+    'taxon_subgenus_name': 'Подрод',
+    'taxon_section_name': 'Секция',
+    'taxon_subsection_name': 'Подсекция',
+    'taxon_complex_name': 'Комплекс',
+    'taxon_species_name': 'Вид',
+    'taxon_hybrid_name': 'Гибрид',
+    'taxon_subspecies_name': 'Подвид',
+    'taxon_variety_name': 'Разновидность',
+    'taxon_form_name': 'Форма',
+    'taxon_infrahybrid_name': 'Инфрагибрид',
+}
 
 
 def prepare_df(
@@ -51,8 +110,10 @@ def prepare_df(
     df['created_at'] = pd.to_datetime(df_full['created_at']).dt.date
     del df_full
     #  Getting dates.
-    start_date = min(df['created_at']) if start_date == 'min' else start_date
-    finish_date = max(df['created_at']) if finish_date == 'max' else finish_date
+    if start_date == 'min':
+        start_date = min(df['created_at'])
+    if finish_date == 'max':
+        finish_date = max(df['created_at'])
     if not isinstance(start_date, date) or not isinstance(finish_date, date):
         logger.exception('Can not parse date from file! Exit')
         sys.exit()
@@ -69,9 +130,8 @@ def get_taxons_df_to_date(df: DataFrame, date_to: date) -> DataFrame:
         taxons info dataframe
     """
     #  Filter to date
-    df = df_taxons[df_taxons['created_at'] <= date_to].copy()
+    df = df[df['created_at'] <= date_to].copy()
     #  Clear from unnecessary data
-    # TODO can there useful info be deleted? When it present only after start_date...
     df.drop('created_at', axis=1, inplace=True)
     df.dropna(axis=1, how='all', inplace=True)
     #  Get highest taxons for each observation
@@ -144,11 +204,11 @@ def update_radius(
     havenoradiuses = check_radiuses[check_radiuses['count'].isnull()].copy()
     #  Fetch data from iNat.
     if havenoradiuses.shape[0] > 0:
-        logger.info(f'Ask for {havenoradiuses.shape[0]} values from iNat')
+        logger.info('Ask for %s values from iNat', havenoradiuses.shape[0])
         havenoradiuses.drop('count', axis=1, inplace=True)
         fetched = fetch_radius(havenoradiuses)
         fetched_sum = fetched['count'].notnull().sum()
-        logger.info(f'Have fetched {fetched_sum} values from iNat')
+        logger.info('Have fetched %s values from iNat', fetched_sum)
         df_tax_csv = pd.concat([df_tax_csv, fetched])
         df_tax_csv.to_csv(path_or_buf=db_path, index=False)
         del df_tax_csv
@@ -156,7 +216,7 @@ def update_radius(
         logger.info('No need to fetch from iNat')
     #  Check "db" "integrity" below
     df_tax_csv = pd.read_csv(index_col=False, filepath_or_buffer=db_path)
-    logger.info(f'Total in csv: {df_tax_csv.shape[0]} values ')
+    logger.info('Total in csv: %s values ', df_tax_csv.shape[0])
     if not (df_tax_csv.value_counts(subset=csb_col_set) > 1).any():
         logger.info('No duplicates in csv')
     else:
@@ -181,30 +241,25 @@ def fetch_radius(havenoradiuses: DataFrame) -> DataFrame:
     # Create text file for some 'reserve' plain text database for case of fall at load
     current_date = str.replace(str(date.today()), '-', '_')
     current_time = time.strftime('%H_%M_%S', time.localtime())
-    # TODO parameter
     temporal_txt_path = 'data/temp_file_' + current_date + '_' + current_time + '.csv'
-    with open(temporal_txt_path, 'a', encoding='utf-8') as temp_file:
+    with open(file=temporal_txt_path, mode='a', encoding='utf-8') as temp_file:
         temp_file.write('taxon_id,radius,date,count\n')
-    url = 'https://api.inaturalist.org/v1/observations'
     df = DataFrame(columns=['taxon_id', 'radius', 'date', 'count'])
     for i in tqdm(range(havenoradiuses.shape[0])):
         taxon_id = havenoradiuses.iloc[i, 0]
         radius = havenoradiuses.iloc[i, 1]
         date_to = havenoradiuses.iloc[i, 2]
         if radius == 0:
-            lat, lng, radius_param = '', '', ''
+            geoparams = ['', '', '']
         else:
-            # TODO parameter
-            lat = '55.494403'
-            lng = '38.644662'
-            radius_param = radius
+            geoparams = [LAT, LNG, radius]
         params = {
             'verifiable': 'true',
             'taxon_id': taxon_id,
             'd2': date_to,
-            'lat': lat,
-            'lng': lng,
-            'radius': radius_param,
+            'lat': geoparams[0],
+            'lng': geoparams[1],
+            'radius': geoparams[2],
             'order': 'desc',
             'order_by': 'created_at',
             'only_id': 'true',
@@ -212,18 +267,19 @@ def fetch_radius(havenoradiuses: DataFrame) -> DataFrame:
         ##################################
         ##### LINE BELOW LOAD DATA ! #####
         ##################################
-        response = requests.get(url=url, params=params)
+        response = requests.get(
+            url='https://api.inaturalist.org/v1/observations', params=params, timeout=20
+        )
         count = response.json()['total_results']
         df.loc[i] = [taxon_id, radius, date_to, count]
         #  Write to reserve file.
-        with open(temporal_txt_path, 'a') as temp_file:
+        with open(temporal_txt_path, 'a', encoding='utf-8') as temp_file:
             db_line = [str(taxon_id), str(radius), date_to, str(count)]
             temp_file.write(','.join(db_line) + '\n')
         if response.status_code != 200:
             logger.warning('Response is not 200: %s. Smth wrong', response.status_code)
-            raise Exception('Oh, response is not 200, it is ', response.status_code)
-        # TODO parameter
-        time.sleep(1)
+            raise HTTPError('Oh, response is not 200, it is ', response.status_code)
+        time.sleep(SEC_SLEEP_TIME)
         logger.info(
             'Done loop %s: r%s, date %s, response %s, count %s, id %s',
             i,
@@ -236,12 +292,46 @@ def fetch_radius(havenoradiuses: DataFrame) -> DataFrame:
     return df
 
 
+def get_radius(
+    taxons_list: DataFrame, date_to: str, taxons_df_finish: DataFrame
+) -> DataFrame:
+    """
+    Reads database for current taxons for specific date.
+    Args:
+        taxons_list: df with index as taxon list
+        date_to: date
+        tax_df_finish: df with index as taxons list
+    Returns:
+        dataframe with counts
+    """
+    df = pd.DataFrame()
+    df_tax_csv = pd.read_csv(index_col='taxon_id', filepath_or_buffer=PATH_DATABASE)
+    df.index = taxons_list.index
+    df_tax_csv_todate = df_tax_csv[
+        (df_tax_csv['date'] == date_to)
+        & (df_tax_csv.index.isin(taxons_df_finish.index))
+    ]
+    df = df.merge(df_tax_csv_todate, how='left', left_index=True, right_index=True)
+    return df
+
+
+def get_cool_indexes(column: Series) -> Series:
+    """
+    Make chart-list (1, 2, 3, 3, 4, ...) where same numbers are for same vals.
+    Args:
+        column: column (which one?)
+    Returns:
+        column with positions
+    """
+    series_sorted = column.sort_values()
+    positions = series_sorted.ne(series_sorted.shift()).cumsum()
+    positions = positions.align(column)[0]
+    return positions
+
+
 def get_radius_info(
     taxons_df_start: DataFrame,
     taxons_df_finish: DataFrame,
-    radiuses_dataset_path: str,
-    start_date: date,
-    finish_date: date,
     df_orig: DataFrame,
 ) -> DataFrame:
     """
@@ -250,9 +340,6 @@ def get_radius_info(
     Args:
         tax_df_start: df with index as taxons at start date, to mark taxons as "new"
         tax_df_finish: df with all the taxons. Need for index, columns, data
-        radiuses_dataset_path: db path
-        start_date: first date, used to get db data as column namer
-        finish_date: second date, used to get db data as column namer
         df_orig: original dataframe after prepare_df(), used for count totals of RG obs.
     Returns:
         Multiindexed dataframe with
@@ -269,47 +356,13 @@ def get_radius_info(
             iconic_taxon_name: English iconic taxon name
     """
 
-    def get_radius(taxons_list: DataFrame, date_to: str) -> DataFrame:
-        """
-        Reads database for current taxons for specific date.
-        Args:
-            db: dataframe with saved radiuses
-            tax_df_finish: df with index as taxons list
-            date_to: date
-        Returns:
-            dataframe with counts
-        """
-        df = pd.DataFrame()
-        df.index = taxons_list.index
-        df_tax_csv_todate = df_tax_csv[
-            (df_tax_csv['date'] == date_to)
-            & (df_tax_csv.index.isin(taxons_df_finish.index))
-        ]
-        df = df.merge(df_tax_csv_todate, how='left', left_index=True, right_index=True)
-        return df
+    df = df_orig[df_orig['created_at'] <= FINISH_DATE].copy()
+    start_date_str = str(START_DATE)
+    finish_date_str = str(FINISH_DATE)
 
-    def get_cool_indexes(column: Series) -> Series:
-        """
-        Make chart-list (1, 2, 3, 3, 4, ...) where same numbers are for same vals.
-        Args:
-            column: column (which one?)
-        Returns:
-            column with positions
-        """
-        series_sorted = column.sort_values()
-        positions = series_sorted.ne(series_sorted.shift()).cumsum()
-        positions = positions.align(column)[0]
-        return positions
-
-    df = df_orig[df_orig['created_at'] <= finish_date].copy()
-    start_date_str = str(start_date)
-    finish_date_str = str(finish_date)
-    df_tax_csv = pd.read_csv(
-        index_col='taxon_id', filepath_or_buffer=radiuses_dataset_path
-    )
     #  Get data from csv for all taxons
-    df_start = get_radius(taxons_df_finish, start_date_str)
-    df_finish = get_radius(taxons_df_finish, finish_date_str)
+    df_start = get_radius(taxons_df_finish, start_date_str, taxons_df_finish)
+    df_finish = get_radius(taxons_df_finish, finish_date_str, taxons_df_finish)
     df_compact = (
         pd.concat([df_start, df_finish])
         .pivot(columns=['date', 'radius'], values='count')
@@ -319,14 +372,14 @@ def get_radius_info(
     df_diff = df_compact.loc[:, finish_date_str] - df_compact.loc[:, start_date_str]
     df_diff = pd.concat([df_diff], keys=['count_diff'], axis=1)
     #  Mark with positions
-    df_pos_start = df_compact[df_compact[(start_date_str, radiuses[-1])].notnull()][
-        start_date_str
-    ].apply(get_cool_indexes, axis=0)
+    df_pos_start = df_compact[
+        df_compact[(start_date_str, RADIUSES_LIST[-1])].notnull()
+    ][start_date_str].apply(get_cool_indexes, axis=0)
     df_pos_start = pd.concat([df_pos_start], keys=['pos_start'], axis=1)
     df_pos_finish = df_compact[finish_date_str].apply(get_cool_indexes, axis=0)
     df_pos_finish = pd.concat([df_pos_finish], keys=['pos_finish'], axis=1)
     #  Sort dataframe
-    sort_list = [('pos_finish', radiuses[i]) for i in range(len(radiuses))]
+    sort_list = [('pos_finish', RADIUSES_LIST[i]) for i in range(len(RADIUSES_LIST))]
     df_pos_finish = df_pos_finish.sort_values(by=sort_list)  # type: ignore
     df_pos = pd.concat([df_compact, df_diff, df_pos_start, df_pos_finish], axis=1)
     df_pos = df_pos.reindex(index=df_pos_finish.index)
@@ -363,8 +416,8 @@ def sort_index(df: DataFrame) -> DataFrame:
         'result_pos',
         'result_name',
         'result_count',
-        str(start_date),
-        str(finish_date),
+        str(START_DATE),
+        str(FINISH_DATE),
         'full_pos',
         'count_diff',
         'pos_start',
@@ -376,7 +429,7 @@ def sort_index(df: DataFrame) -> DataFrame:
         'iconic_taxon_name',
         'common_name',
         'research',
-    ] + list(radiuses)
+    ] + list(RADIUSES_LIST)
     sort_dict = {sort_dict_order[i]: i for i in range(len(sort_dict_order))}
     df = df.sort_index(axis=1, level=[0, 1], key=lambda x: x.map(sort_dict))
     return df
@@ -416,11 +469,13 @@ def addresult_columns(df: DataFrame) -> DataFrame:
     for columnset in ['result_name', 'result_pos', 'result_count']:
         columnset_df = DataFrame(
             columns=pd.MultiIndex.from_product(
-                [[columnset], radiuses], names=['date', 'radius']
+                [[columnset], RADIUSES_LIST], names=['date', 'radius']
             ),
             index=df.index,
         )
-        columnset_df[columnset][radiuses[0]] = df[str(finish_date)][radiuses[0]]
+        columnset_df[columnset][RADIUSES_LIST[0]] = df[str(FINISH_DATE)][
+            RADIUSES_LIST[0]
+        ]
         df = pd.concat([df, columnset_df], axis=1)
     df = sort_index(df)
     return df
@@ -434,8 +489,8 @@ def add_apply_formats(df: DataFrame) -> DataFrame:
     Returns:
         same formatted df
     """
-    df['taxon_rang'] = df['taxon_rang'].apply(lambda x: ranks_enru.get(x))
-    df[str(finish_date)] = df[str(finish_date)].applymap(formatcount)
+    df['taxon_rang'] = df['taxon_rang'].apply(RANKS_ENRU.get)
+    df[str(FINISH_DATE)] = df[str(FINISH_DATE)].applymap(formatcount)
     df['count_diff'] = df['count_diff'].applymap(formatcount, count_diff=True)
     return df
 
@@ -456,12 +511,14 @@ def joininfo(row: Series) -> Series:
     ifnew = row['ifnew'].item()
     taxon_rang = row['taxon_rang'].item()
     count_diff = row['count_diff'].astype('string')
-    count = row[str(finish_date)].astype('string')
+    count = row[str(FINISH_DATE)].astype('string')
     taxon_id = row.name
     research = row['research'].item()
     iconic_taxon_name = str(row['iconic_taxon_name'].item()).lower()
-    taxon_name_link = f'<a href=https://www.inaturalist.org/taxa/{taxon_id} style="color:black">{str(taxon_name)}</a>'
-    common_name_link = f'<a href=https://www.inaturalist.org/taxa/{taxon_id} style="color:black">{str(common_name).title()}</a>'
+    taxon_name_link = f'<a href=https://www.inaturalist.org/taxa/{taxon_id} \
+style="color:black">{str(taxon_name)}</a>'
+    common_name_link = f'<a href=https://www.inaturalist.org/taxa/{taxon_id} \
+style="color:black">{str(common_name).title()}</a>'
 
     if pd.isnull(common_name):
         bold = f'<b>{taxon_name_link}</b>'
@@ -478,15 +535,14 @@ def joininfo(row: Series) -> Series:
     if not research:
         research = (
             f'<a href=https://www.inaturalist.org/observations?'
-            f'&project_id={project_id}'
+            f'&project_id={PROJECT_ID}'
             '&subview=map&nelat=55.526&nelng=38.85&swlat=55.423&swlng=38.536'
             f'&taxon_id={taxon_id} style="color:black">Need ID</a>'
         )
     else:
-        # TODO coordinates!
         research = (
             f'<a href=https://www.inaturalist.org/observations?'
-            f'&project_id={project_id}'
+            f'&project_id={PROJECT_ID}'
             '&subview=map&nelat=55.526&nelng=38.85&swlat=55.423&swlng=38.536'
             f'&taxon_id={taxon_id} style="color:green"><b>RG&#xD7;{research}</b></a>'
         )
@@ -502,12 +558,13 @@ def joininfo(row: Series) -> Series:
 
     row[
         'iconic_taxon_name'
-    ] = f'<img src=https://www.inaturalist.org/assets/iconic_taxa/{iconic_taxon_name}-cccccc-20px.png alt={iconic_taxon_name}>'
+    ] = f'<img src=https://www.inaturalist.org/assets/iconic_taxa/{iconic_taxon_name}\
+-cccccc-20px.png alt={iconic_taxon_name}>'
 
     row['result_count'] = (
         f'<a href=https://www.inaturalist.org/observations?'
         '&place_id=any'
-        f'&lat={lat}&lng={lng}&radius=xxx'
+        f'&lat={LAT}&lng={LNG}&radius=xxx'
         '&subview=table'
         f'&taxon_id={taxon_id} style="color:black">' + count + '</a> ' + count_diff
     )
@@ -534,16 +591,16 @@ def sort_separate(df: DataFrame, raritets_sort: bool) -> List[DataFrame]:
             'Инфрагибрид',
         ]
         df = df[df['taxon_rang'].isin(afritet_rang)]
-        show_positions = show_positions_afritets
+        show_positions = SHOW_POS_AFRITETS
     else:
-        show_positions = show_positions_raritets
+        show_positions = SHOW_POS_RARITETS
 
-    radiuse_array = np.asarray(radiuses)
+    radiuse_array = np.asarray(RADIUSES_LIST)
     dataframes = []
     count_col_name = []
-    radius_pars = f'&lat={lat}&lng={lng}&radius=xxx'
+    radius_pars = f'&lat={LAT}&lng={LNG}&radius=xxx'
 
-    for radius in radiuses:
+    for radius in RADIUSES_LIST:
         sort_list = [
             ('pos_finish', radiuse_array[i]) for i in range(len(radiuse_array))
         ]
@@ -554,12 +611,15 @@ def sort_separate(df: DataFrame, raritets_sort: bool) -> List[DataFrame]:
         df.insert(0, full_pos_col, range(1, df.shape[0] + 1))
         df[full_pos_col] = df[full_pos_col].astype('string')
 
-        df = df.sort_values(by=sort_list, ignore_index=True, ascending=raritets_sort)  # type: ignore
+        df = df.sort_values(
+            by=sort_list, ignore_index=True, ascending=raritets_sort  # type:ignore
+        )
 
         if radius:
-            count_col_name = f'Количество наблюдений<br>в радиусе {radius} км на {format_finish_date}'
+            count_col_name = f'Количество наблюдений<br>в радиусе {radius}\
+ км на {FORMAT_FINISH_DATE}'
         else:
-            count_col_name = f'Количество наблюдений<br>во всём iNat'
+            count_col_name = 'Количество наблюдений<br>во всём iNat'
             df.loc[:, ('result_count', radius)] = df['result_count'][radius].apply(
                 lambda x: x.replace(radius_pars, ''),
             )
@@ -600,8 +660,7 @@ def raritets_html(raritets: List[DataFrame], raritets_sort: bool) -> None:
         raritets_sort: if it table of rarest species or no
     """
     prefix = 'raritets' if raritets_sort else 'afritets'
-    for i in range(len(radiuses)):
-        radius = radiuses[i]
+    for i, radius in enumerate(RADIUSES_LIST):
         htmlname = f'output/{prefix}_' + str(radius) + '.html'
         df_to_export = raritets[i]
         df_to_export.to_html(
@@ -613,7 +672,7 @@ def raritets_html(raritets: List[DataFrame], raritets_sort: bool) -> None:
             border=None,
         )
 
-        with open(htmlname, 'r') as file:
+        with open(htmlname, 'r', encoding='utf-8') as file:
             filedata = file.read()
 
         # Replace the target string
@@ -641,7 +700,8 @@ def raritets_html(raritets: List[DataFrame], raritets_sort: bool) -> None:
         )
         filedata = filedata.replace(
             '<th>Количество наблюдений<br>во всём iNat',
-            f'<th  style="vertical-align:top" width="30%">Количество наблюдений<br>во всём iNat на {format_finish_date}',
+            f'<th  style="vertical-align:top" width="30%">Количество наблюдений<br>\
+во всём iNat на {FORMAT_FINISH_DATE}',
         )
 
         filedata = filedata.replace(
@@ -657,109 +717,47 @@ def raritets_html(raritets: List[DataFrame], raritets_sort: bool) -> None:
             r'<b style="font-size:62%;color:green">&nbsp;&nbsp;&#8593;\1</b>',
             filedata,
         )
-        with open(htmlname, 'w') as file:
+        with open(htmlname, 'w', encoding='utf-8') as file:
             file.write(filedata)
 
 
-PATH_TRANSLATIONS = './assets/lang'
-FILENAME_FORMAT_I18N = '{locale}.{format}'
-LOCALE_DEFAULT = 'ru'
-i18n.load_path.append(PATH_TRANSLATIONS)
-i18n.set('filename_format', FILENAME_FORMAT_I18N)
-i18n.set('locale', LOCALE_DEFAULT)
+def main(start_date, finish_date):
+    """
+    Main function to load others
+    """
+    #  Create dataframe.
+    df_taxons, start_date, finish_date = prepare_df(PATH_CSV, start_date, finish_date)
+    #  Prepare all the taxon data we have in user's csv.
+    tax_df_finish = get_taxons_df_to_date(df_taxons, finish_date)
+    tax_df_start = get_taxons_df_to_date(df_taxons, start_date)
+    #  Updata database if needed.
+    update_radius(
+        df_taxons=tax_df_finish,
+        radiuses=RADIUSES_LIST,
+        db_path=PATH_DATABASE,
+        date_to=start_date,
+    )
+    update_radius(
+        df_taxons=tax_df_finish,
+        radiuses=RADIUSES_LIST,
+        db_path=PATH_DATABASE,
+        date_to=finish_date,
+    )
+    #  Put all the info — database, taxons, dates — into main dataframe and do calculations.
+    df_pos = get_radius_info(tax_df_start, tax_df_finish, df_taxons)
+    #  Add translation and humand readability
+    df_added_formats = add_apply_formats(df_pos)
+    #  Insert empty columns.
+    df_added_res_cols = addresult_columns(df_added_formats)
+    #  Put all the info together to columns basing on apps logic.
+    df_info = df_added_res_cols.apply(joininfo, axis=1)
+    #  Separate datasets by radiuses
+    raritets = sort_separate(df_info, raritets_sort=True)
+    afritets = sort_separate(df_info, raritets_sort=False)
+    #  Write datasets to files
+    raritets_html(raritets, raritets_sort=True)
+    raritets_html(afritets, raritets_sort=False)
 
-csv_path = 'data/observations-390079_tahf_22dec2023.csv'
-db_path = 'data/radiuses_dataset.csv'
-# start_date = 'min'
-start_date = date(2023, 2, 28)
-# finish_date = 'max'
-finish_date = date(2023, 8, 31)
-radiuses = (20, 200, 2000, 0)
-show_positions_raritets = 20
-show_positions_afritets = 15
-lat = '55.494403'
-lng = '38.644662'
-project_id = 'tsyurupy-i-ego-lesa'
 
-month_num = int(finish_date.strftime('%m'))
-months_ru = {
-    1: 'Янв',
-    2: 'Фев',
-    3: 'Мар',
-    4: 'Апр',
-    5: 'Май',
-    6: 'Июн',
-    7: 'Июл',
-    8: 'Авг',
-    9: 'Сен',
-    10: 'Окт',
-    11: 'Ноя',
-    12: 'Дек',
-}
-format_finish_date = finish_date.strftime(f'%d {months_ru.get(month_num)} %Y')
-
-ranks_enru = {
-    'taxon_kingdom_name': 'Царство',
-    'taxon_phylum_name': 'Тип',
-    'taxon_subphylum_name': 'Подтип',
-    'taxon_superclass_name': 'Надкласс',
-    'taxon_class_name': 'Класс',
-    'taxon_subclass_name': 'Подкласс',
-    'taxon_infraclass_name': 'Инфракласс',
-    'taxon_subterclass_name': 'Надкласс',
-    'taxon_superorder_name': 'Надотряд',
-    'taxon_order_name': 'Отряд',
-    'taxon_suborder_name': 'Подотряд',
-    'taxon_infraorder_name': 'Инфраотряд',
-    'taxon_parvorder_name': 'Парвотряд',
-    'taxon_zoosection_name': 'Зоосекция',
-    'taxon_zoosubsection_name': 'Зооподсекция',
-    'taxon_superfamily_name': 'Надсемейство',
-    'taxon_epifamily_name': 'Эписемейство',
-    'taxon_family_name': 'Семейство',
-    'taxon_subfamily_name': 'Подсемейство',
-    'taxon_supertribe_name': 'Надтриба',
-    'taxon_tribe_name': 'Триба',
-    'taxon_subtribe_name': 'Подтриба',
-    'taxon_genus_name': 'Род',
-    'taxon_genushybrid_name': 'Genus hybrid',
-    'taxon_subgenus_name': 'Подрод',
-    'taxon_section_name': 'Секция',
-    'taxon_subsection_name': 'Подсекция',
-    'taxon_complex_name': 'Комплекс',
-    'taxon_species_name': 'Вид',
-    'taxon_hybrid_name': 'Гибрид',
-    'taxon_subspecies_name': 'Подвид',
-    'taxon_variety_name': 'Разновидность',
-    'taxon_form_name': 'Форма',
-    'taxon_infrahybrid_name': 'Инфрагибрид',
-}
-
-#  Create dataframe.
-df_taxons, start_date, finish_date = prepare_df(csv_path, start_date, finish_date)
-#  Prepare all the taxon data we have in user's csv.
-tax_df_finish = get_taxons_df_to_date(df_taxons, finish_date)
-tax_df_start = get_taxons_df_to_date(df_taxons, start_date)
-#  Updata database if needed.
-update_radius(
-    df_taxons=tax_df_finish, radiuses=radiuses, db_path=db_path, date_to=start_date
-)
-update_radius(
-    df_taxons=tax_df_finish, radiuses=radiuses, db_path=db_path, date_to=finish_date
-)
-#  Put all the info — database, taxons, dates — into main dataframe and do calculations.
-df_pos = get_radius_info(
-    tax_df_start, tax_df_finish, db_path, start_date, finish_date, df_taxons
-)
-#  Add translation and humand readability
-df_added_formats = add_apply_formats(df_pos)
-#  Insert empty columns.
-df_added_res_cols = addresult_columns(df_pos)
-#  Put all the info together to columns basing on apps logic.
-df_info = df_added_res_cols.apply(joininfo, axis=1)
-#  Separate datasets by radiuses
-raritets = sort_separate(df_info, raritets_sort=True)
-afritets = sort_separate(df_info, raritets_sort=False)
-
-raritets_html(raritets, raritets_sort=True)
-raritets_html(afritets, raritets_sort=False)
+if __name__ == '__main__':
+    main(START_DATE, FINISH_DATE)
