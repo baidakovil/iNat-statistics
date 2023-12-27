@@ -23,7 +23,7 @@ Please **wait up to 60 sec** till page at [inat-changes.onrender.com](https://in
 
 [half-year project changes]: https://www.inaturalist.org/projects/tsyurupy-i-ego-lesa/journal/75862-2023
 
-Flask online-app with core script `inat_changes.py`.  
+iNat-changes is a **Flask** online-app with core script `inat_changes.py`.  
 
 #### Features
 
@@ -39,13 +39,13 @@ Flask online-app with core script `inat_changes.py`.
 
 * «**New user**» marks: user *anastasiiamerkulova* above first appeared in current period
 
-* **Season of user's last observation**
+* **Season of user's last observation**: in forth column
 
 * Specifying **number of lines** in the final table
 
-* **Links** to observations: if you provide project name, app will generate link to easy observation access
+* **Links** to observations: if you provide project name, app will generate links to see observations under every value in 3rd, 4th columns
 
-* Ready-to-paste for iNat journal. Just save html file and open it in text editor. All the text can be pasted to post
+* **Ready-to-paste** for iNat journal. Just save `html` file and open it in text editor. All the text can be pasted to post
 
 
 #### Disadvantages — ideas to development
@@ -56,14 +56,14 @@ Flask online-app with core script `inat_changes.py`.
 
 # iNat-treasures
 
-*inat_treasures.ipynb*  
+*inat_treasures.py*  
 
-Utility that automatically load info about geographical distribution of the species and prepares result in handy table. All results of request to API are saved to text file for automatic reusing.
+This utility that automatically load info about geographical distribution of the species and prepares result in handy table. All results of request to API are saved to text file for automatic reusing.
 
-It work in two modes: **rarest species** and **the most popular species**. This are almost same tables, but sorted in opposite order (the difference is: _most popular_ consist only species AND subspecies, but no any other taxon levels: genus, kingdom and etc; _rarest_ table consist all taxon levels).  
+It work in two modes: **rarest species** and **most popular species**. These are almost same tables, but sorted in opposite order (the difference is: **most popular** consist only species AND subspecies, but no any other taxon levels: genus, kingdom and etc; **rarest** table consist all taxon levels).  
 
 
-Example of most popular table from my [post](#afritets-inat-journal):
+Example of the **most popular** table from my [post](#afritets-inat-journal):
 
 <img src="docs/afritets-sample.png" width=100%></img>
 
@@ -72,22 +72,22 @@ This list sorted from most popular to rarest species in radius of 200 km around 
 #### Explanation
 
 
-* For each of modes script will prepare **three tables**: 
+* For each of modes script will prepare **four tables**: 
     - 20 km 
     - 200 km 
     - 2000 km,
     - 0 km,
 
-    i.e. six tables in total. This lenghts is the radiuses of the circle with center as some given geographical point. This point can be, for example, your home or your city main square. **0 km is whole world**, i.e. no radius at all (_yes, this number should be infinity or at least diameter of Earth, but zero is simpler to type!_). 
+    i.e. eight tables in total. This numbers is the radiuses of the circle with center at some inputed geographical point. This point can be, for example, your home or your city main square. **0 km is whole world**, i.e. no radius at all (_yes, this number should be infinity or at least diameter of Earth, but zero is simpler to type!_)  
 
 * Each of tables will include _only_ the species **that present in given csv file**. So what app do? It look, which of these species are rarest or most popular in this circles.
 
     If your csv contains 1000 observations and **500** taxons, app will make this count of API requests:
     <p align="center">500 taxons x 4 radiuses x 2 dates = <b>4000</b> requests</p>
 
-    Each request will give information about how much observations of given taxon exist in given area at given date.
+    Each request will give information about how much observations of given taxon exist in given area at given date
 
-* It includes 2 dates, because app can display **how much new observations** we have in the circles, i.e. dynamics of observation. If you're not interesten in dinamics, just specify first date as first observation date
+* It includes 2 dates, because app can display **how much new observations** we have in the circles, i.e. dynamics of observations. If you're not interested in dinamics, just specify first date as first observation date
 
 * Table will consist both research grade and non-research observations. Filter it by yourself before import if needed.
 
@@ -104,7 +104,7 @@ This list sorted from most popular to rarest species in radius of 200 km around 
 
 * «**New observation»** marks: for example, we can see there was no any _Alchemilla conclobata_ observations in project before this period of time thanks to `NEW` mark. By the way, in that particular case (`NEW` and  ↑1)we can say that for given period of a time the single obs of this species is observation in our list.
 
-* **Taxon level** for all non-species taxons: genus, subspecies, and etc. You can see this in second line of table above
+* **Taxon levels** for all non-species taxons: genus, subspecies, and etc. You can see this in second line of table above
 
 * **Latin names** and **common names** where it possible (some taxons have no common names)
 
@@ -113,7 +113,7 @@ This list sorted from most popular to rarest species in radius of 200 km around 
 * **Database** of loaded data. Loaded date saves to csv with fields: `taxon_id`, `radius`, `date`, `count`. For example, if you monitor changes every month, you need no load info about observations counts for last month — they are already load and saved month ago and will be loaded automatically.  
 _**Notice**: database not saves geographical points that regards to counts, so you have to manage this on your own. It is subject of TODO (you can make pull request too)._
 
-* Human-readable format of counts (K for thousands, M for millions)
+* **Human-readable format** of counts (K for thousands, M for millions).
 
 #### Disadvantages — ideas to development
 
@@ -132,7 +132,7 @@ _**Notice**: database not saves geographical points that regards to counts, so y
 
 * Plain database without coordinates column
 
-    But, it _works_. 
+    P.S. Despite this, it _works_. 
 
 # Built with
 
