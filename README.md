@@ -9,7 +9,6 @@ Now it consists of two scripts.
 - [Util №1: iNat-changes](#iNat-changes)
 - [Util №2: iNat-treasures](#iNat-treasures)
 - [Built with](#built-with)
-- [How to use](#how-to-use)
 - [Contributing](#contributing)
 
 # iNat-changes
