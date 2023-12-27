@@ -1,10 +1,18 @@
 
 # iNat-statistics
+[![Dynamic JSON Badge](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Finat-changes-deploy-status.onrender.com%2Fsrv-cm0tvola73kc73ebeqdg&query=status&style=flat-square&logo=render&label=Render%3A%20iNat-changes&color=green&link=https%3A%2F%2Finat-changes.onrender.com)](https://inat-changes.onrender.com) [![Pylint](https://github.com/baidakovil/iNat-stats/actions/workflows/pylint.yml/badge.svg)](https://github.com/baidakovil/iNat-stats/actions/workflows/pylint.yml) [![mypy](https://github.com/baidakovil/iNat-stats/actions/workflows/mypy.yml/badge.svg)](https://github.com/baidakovil/iNat-stats/actions/workflows/mypy.yml)
 
-This repository is common place for set of programs for iNaturalist.org users.
+It is a common place for utilities to work with statisctics of iNaturalist.org data.  
+Now it consists of two scripts.
+
+## Table of contents
+- [Util №1: iNat-changes](#iNat-changes)
+- [Util №2: iNat-treasures](#iNat-treasures)
+- [Built with](#built-with)
+- [How to use](#how-to-use)
+- [Contributing](#contributing)
 
 # iNat-changes
-[![Dynamic JSON Badge](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Finat-changes-deploy-status.onrender.com%2Fsrv-cm0tvola73kc73ebeqdg&query=status&style=flat-square&logo=render&label=Render%3A%20iNat-changes&color=green&link=https%3A%2F%2Finat-changes.onrender.com)](https://inat-changes.onrender.com) [![Pylint](https://github.com/baidakovil/iNat-stats/actions/workflows/pylint.yml/badge.svg)](https://github.com/baidakovil/iNat-stats/actions/workflows/pylint.yml) [![mypy](https://github.com/baidakovil/iNat-stats/actions/workflows/mypy.yml/badge.svg)](https://github.com/baidakovil/iNat-stats/actions/workflows/mypy.yml)
 
 This utility catch **user activity changes** in your iNat project or in **list of any iNat observations**. It creates html table, ready to publish to iNat journal post.  
 How it does actually look you can see in one of my own regular posts about [half-year project changes].
@@ -46,11 +54,9 @@ Flask online-app with core script `inat_changes.py`.
 
 * No statistics about observations: current period / total users / total observations
 
-# iNat-raritets
+# iNat-treasures
 
-[![Pylint](https://github.com/baidakovil/iNat-stats/actions/workflows/pylint.yml/badge.svg)](https://github.com/baidakovil/iNat-stats/actions/workflows/pylint.yml) [![mypy](https://github.com/baidakovil/iNat-stats/actions/workflows/mypy.yml/badge.svg)](https://github.com/baidakovil/iNat-stats/actions/workflows/mypy.yml)
-
-*inat_raritets.ipynb*  
+*inat_treasures.ipynb*  
 
 Utility that automatically load info about geographical distribution of the species and prepares result in handy table. All results of request to API are saved to text file for automatic reusing.
 
@@ -88,7 +94,7 @@ This list sorted from most popular to rarest species in radius of 200 km around 
 
 #### Features
 
-* Display the **number of research grade observations** in the given list.
+ * Display the **number of research grade observations** in the given list.
 
     Look at example: rarest table from my [half-year report](#raritets-inat-journal]), in second column. 
 
@@ -111,22 +117,58 @@ _**Notice**: database not saves geographical points that regards to counts, so y
 
 #### Disadvantages — ideas to development
 
-* Jupyter notebook format. No app at this time, because it needed to rewrite to sql-database and it takes time
+* **REALLY GOOD IDEA** to end life of this script by 
+
+    + using pipeline where _all info about all the observations_ in R20 and R200 areas are loaded into database. This requires multiple CSV by-hand requests from, iNat but gives much more flexibility
+    + R2000 and R0 areas are used current pipeline, but HTML data prepared with EJS or another program logic, not `replace`
+
+* It is really bad written code. It is awful and almost can't be debugged or updated
 
 * Russian language in headings without choice
 
 * No totals, no notes on current periods
 
-* Specifying of radiuses, coordinates in code
+* No variables of radiuses, coordinates in code
 
 * Plain database without coordinates column
 
+    But, it _works_. 
 
-## Contributing
+# Built with
 
-If you wish to make code contributions to the project, you are welcome! Make pull requests, open issues, write me on iNat with ideas. This project certainly have future
+#### Online-services
+**[iNaturalist.org]** - Online social network of people sharing biodiversity information since 2008 **|** *MIT*  
 
-🪡🦄🦋🐌🐞🐜🐢🦂🕸🕷🦗🦟🪳🪲🪰🐡🐠🐏🐫🐖🐈🪽🐀🎄🌵🍂💐🪨🐚🪹🌾🌷🌳🍄🍄🍄🍄🍄🍄🦩
+#### Software
+**[Python]** - Language to work quickly and integrate systems more effectively since 1991**|** *GPL compatible*  
+
+* For _inat-changes_:   
+    **[Flask]** -  Web framework written in Python since 2004 **|** *BSD*  
+    **[Werkzeug]** - Utility library for Web Server Gateway Interface applications since 2007 **|** *BSD*  
+    **[Gunicorn]** - Python WSGI HTTP Server ported from Ruby’s _Unicorn_ project since 2010 **|** *Apache 2*  
+
+* For _inat-treasures_:   
+    **[Requests]** - HTTP library for Python allowing to send HTTP requests since 2011 **|** *Apache 2* 
+
+#### Hosting service
+**[Render]** - cloud platform to build and run apps and websites with autodeploy from GitHub **|** *proprietary*
+
+***Note**: As a designer and programmer, I have nothing to do with any of these services  
+or softwares. As a user of the iNaturalist, I have a positive opinion about iNaturalist.*  
+
+[iNaturalist.org]: https://www.iNaturalist.org  
+[Render]: https://render.com  
+[Python]: https://www.python.org/  
+[Flask]: https://flask.palletsprojects.com/en/3.0.x/  
+[Werkzeug]: https://werkzeug.palletsprojects.com/en/3.0.x/  
+[Gunicorn]: https://gunicorn.org/  
+[Requests]: https://requests.readthedocs.io/en/latest/  
+
+# Contributing
+
+If you wish to make code contributions to the project, you are welcome! Make pull requests, open issues, write me on iNat with ideas. This project certainly have it's **future**!
+
+🪡🦄🦋🐌🐞🐜🐢🦂🕸🕷🦗🦟🪳🪲🪰🐡🐠🐏🐫🐖🐈🐀🎄🌵🍂🐢🦂🕸🕷💐🪨🐚🌾🌷🌳🐠🐏🐫🐖🍄🍄🍄🍄🍄🍄🦩
 
 [raritets-inat-journal]: https://www.inaturalist.org/projects/tsyurupy-i-ego-lesa/journal/75866-osen-vesna-2022-23-samye-redkie-vidy/
 

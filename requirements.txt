@@ -1,5 +1,9 @@
 Flask==3.0.0
 pandas==2.0.3
-pandas-stubs
 Werkzeug==3.0.1
 Gunicorn
+requests
+tqdm
+pandas-stubs
+types-tqdm
+types-requests
